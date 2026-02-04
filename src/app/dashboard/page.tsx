@@ -318,10 +318,18 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen px-2 py-16 flex justify-center">
-      <div className="w-full max-w-6xl grid gap-10">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div>
+    <div
+      className="min-h-screen"
+      style={{
+        paddingLeft: "35px",
+        paddingRight: "35px",
+        paddingTop: "48px",
+        paddingBottom: "48px"
+      }}
+    >
+      <div className="w-full max-w-none grid gap-10">
+        <div className="dashboard-header flex w-full flex-col items-start gap-6 md:flex-row md:items-center md:justify-between p-6">
+          <div className="dashboard-title w-full text-left">
             <h1 className="text-3xl font-semibold tracking-[0.04em]">
               Capstone Materials
             </h1>
@@ -329,15 +337,15 @@ export default function DashboardPage() {
               Space for all the dependencies
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="dashboard-actions flex w-full flex-nowrap gap-4 justify-start md:w-auto md:justify-end">
             <button
-              className="rounded-md border border-white/15 bg-[#0b132b]/70 px-4 py-2 text-base tracking-[0.04em] text-white hover:bg-[#0b132b]/85 active:scale-[0.99] transition"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-white/15 bg-[#0b132b]/70 px-8 py-3 text-base tracking-[0.04em] text-white hover:bg-[#0b132b]/85 active:scale-[0.99] transition"
               onClick={() => handleOpenModal()}
             >
               Add Material
             </button>
             <button
-              className="rounded-md border border-white/15 bg-[#0b132b]/70 px-4 py-2 text-base tracking-[0.04em] text-gray-200 hover:bg-[#0b132b]/85 active:scale-[0.99] transition"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-white/15 bg-[#0b132b]/70 px-8 py-3 text-base tracking-[0.04em] text-gray-200 hover:bg-[#0b132b]/85 active:scale-[0.99] transition"
               onClick={handleLogout}
             >
               Logout
