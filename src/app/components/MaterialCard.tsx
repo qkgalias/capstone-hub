@@ -43,22 +43,10 @@ export default function MaterialCard({
     };
   }, [menuOpen]);
 
-  const handleOpen = () => {
-    if (dragging) return;
-    window.open(material.link, "_blank", "noopener,noreferrer");
-  };
-
   return (
     <div
       className="card-node"
-      role="button"
-      tabIndex={0}
-      onClick={handleOpen}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          handleOpen();
-        }
-      }}
+      role="group"
     >
       <div className="card-meta" ref={menuRef}>
         <span className="card-badge">{material.type}</span>
@@ -67,6 +55,7 @@ export default function MaterialCard({
             className="card-menu-trigger"
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label="Card actions"
+            onMouseDown={(event) => event.stopPropagation()}
           >
             ···
           </button>
@@ -95,7 +84,18 @@ export default function MaterialCard({
         </div>
       </div>
       <div className="card-header">
-        <h3 className="card-title">{material.title}</h3>
+        <a
+          className="card-title card-link"
+          href={material.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => {
+            if (!dragging) return;
+            event.preventDefault();
+          }}
+        >
+          {material.title}
+        </a>
       </div>
     </div>
   );

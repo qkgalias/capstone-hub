@@ -7,13 +7,19 @@ type Particle = {
   y: number;
   vx: number;
   vy: number;
+  ox: number;
+  oy: number;
+  radius: number;
+  phase: number;
+  bobPhase: number;
+  bobOffset: number;
 };
 
-const PARTICLE_COUNT = 400;
-const DRIFT_SPEED_MIN = 0.018;
-const DRIFT_SPEED_MAX = 0.045;
-const ATTRACTION_RADIUS = 200;
-const ATTRACTION_FORCE = 0.006;
+const PARTICLE_COUNT = 600;
+const DRIFT_SPEED_MIN = 0.028;
+const DRIFT_SPEED_MAX = 0.065;
+const REPULSION_RADIUS = 200;
+const REPULSION_FORCE = 0.0045;
 const LINK_RADIUS = 50;
 
 export default function ParticleField() {
@@ -49,6 +55,42 @@ export default function ParticleField() {
       );
     };
 
+    const findSpawnPosition = (
+      particles: Particle[],
+      widthValue: number,
+      heightValue: number
+    ) => {
+      if (particles.length === 0) {
+        return { x: Math.random() * widthValue, y: Math.random() * heightValue };
+      }
+
+      let bestX = Math.random() * widthValue;
+      let bestY = Math.random() * heightValue;
+      let bestScore = -1;
+      const samples = 10;
+
+      for (let i = 0; i < samples; i += 1) {
+        const candidateX = Math.random() * widthValue;
+        const candidateY = Math.random() * heightValue;
+        let minDistSq = Number.POSITIVE_INFINITY;
+
+        for (let j = 0; j < particles.length; j += 1) {
+          const dx = candidateX - particles[j].x;
+          const dy = candidateY - particles[j].y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < minDistSq) minDistSq = distSq;
+        }
+
+        if (minDistSq > bestScore) {
+          bestScore = minDistSq;
+          bestX = candidateX;
+          bestY = candidateY;
+        }
+      }
+
+      return { x: bestX, y: bestY };
+    };
+
     const createParticle = (x: number, y: number) => {
       const speed =
         DRIFT_SPEED_MIN +
@@ -57,8 +99,33 @@ export default function ParticleField() {
         x,
         y,
         vx: (Math.random() - 0.5) * speed,
-        vy: -speed
+        vy: -speed,
+        ox: x,
+        oy: y,
+        radius: 0.9 + Math.random() * 0.6,
+        phase: Math.random() * Math.PI * 2,
+        bobPhase: Math.random() * Math.PI * 2,
+        bobOffset: Math.random() * 6 + 2
       };
+    };
+
+    const resetParticle = (particle: Particle) => {
+      const spawn = findSpawnPosition(particlesRef.current, width, height);
+      const x = spawn.x;
+      const y = spawn.y;
+      const speed =
+        DRIFT_SPEED_MIN +
+        Math.random() * (DRIFT_SPEED_MAX - DRIFT_SPEED_MIN);
+      particle.x = x;
+      particle.y = y;
+      particle.ox = x;
+      particle.oy = y;
+      particle.vx = (Math.random() - 0.5) * speed;
+      particle.vy = -speed;
+      particle.radius = 0.9 + Math.random() * 0.6;
+      particle.phase = Math.random() * Math.PI * 2;
+      particle.bobPhase = Math.random() * Math.PI * 2;
+      particle.bobOffset = Math.random() * 6 + 2;
     };
 
     const tick = (time: number) => {
@@ -69,7 +136,7 @@ export default function ParticleField() {
       context.fillStyle = "rgba(229, 231, 235, 0.7)";
 
       const cursor = cursorRef.current;
-      const attractionRadiusSq = ATTRACTION_RADIUS * ATTRACTION_RADIUS;
+      const repulsionRadiusSq = REPULSION_RADIUS * REPULSION_RADIUS;
       const linkRadiusSq = LINK_RADIUS * LINK_RADIUS;
       const particles = particlesRef.current;
 
@@ -79,12 +146,17 @@ export default function ParticleField() {
           const dx = cursor.x - p.x;
           const dy = cursor.y - p.y;
           const distSq = dx * dx + dy * dy;
-          if (distSq < attractionRadiusSq) {
+          if (distSq < repulsionRadiusSq) {
             const dist = Math.sqrt(distSq) || 1;
-            const pull = (1 - dist / ATTRACTION_RADIUS) * ATTRACTION_FORCE;
-            p.vx += (dx / dist) * pull;
-            p.vy += (dy / dist) * pull;
+            const push = (1 - dist / REPULSION_RADIUS) * REPULSION_FORCE;
+            p.vx -= (dx / dist) * push;
+            p.vy -= (dy / dist) * push;
           }
+        } else {
+          const dxHome = p.ox - p.x;
+          const dyHome = p.oy - p.y;
+          p.vx += dxHome * 0.0045;
+          p.vy += dyHome * 0.0045;
         }
 
         p.vx += (Math.random() - 0.5) * 0.001;
@@ -100,17 +172,19 @@ export default function ParticleField() {
           p.vy *= 0.992;
         }
 
-        if (p.y < -10) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
+        if (p.y < -10 || p.y > height + 10 || p.x < -10 || p.x > width + 10) {
+          resetParticle(p);
+        }
       }
 
       context.globalAlpha = 1;
       for (let i = 0; i < particles.length; i += 1) {
         const p = particles[i];
+        const breathe = Math.sin(time * 0.0016 + p.phase) * 0.85;
+        const size = Math.max(0.6, p.radius + breathe);
+        const bob = Math.sin(time * 0.0012 + p.bobPhase) * p.bobOffset;
         context.beginPath();
-        context.arc(p.x, p.y, 1.1, 0, Math.PI * 2);
+        context.arc(p.x, p.y + bob, size, 0, Math.PI * 2);
         context.fill();
       }
 
@@ -149,9 +223,12 @@ export default function ParticleField() {
     };
 
     resize();
-    particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () =>
-      createParticle(Math.random() * width, Math.random() * height)
-    );
+    const initialParticles: Particle[] = [];
+    for (let i = 0; i < PARTICLE_COUNT; i += 1) {
+      const spawn = findSpawnPosition(initialParticles, width, height);
+      initialParticles.push(createParticle(spawn.x, spawn.y));
+    }
+    particlesRef.current = initialParticles;
 
     window.addEventListener("resize", resize);
     window.addEventListener("pointermove", handleMove);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import AddMaterialModal from "../components/AddMaterialModal";
@@ -8,11 +8,12 @@ import MaterialCard, { Material } from "../components/MaterialCard";
 
 const typeOptions = [
   "Documentation",
+  "UREC Forms",
+  "Questionnaire",
   "System Design",
   "Github Repository",
   "To Do's",
   "Meeting Notes",
-  "Questionnaire",
   "Other"
 ];
 
@@ -28,6 +29,9 @@ export default function DashboardPage() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef({ x: 0, scrollLeft: 0 });
 
   const groupedMaterials = materials.reduce<Record<string, Material[]>>(
     (acc, material) => {
@@ -47,6 +51,23 @@ export default function DashboardPage() {
     if (bIndex === -1) return -1;
     return aIndex - bIndex;
   });
+
+  const maxColumns = Math.min(8, Math.max(1, groupedEntries.length));
+  const effectiveColumns = maxColumns;
+  const balancedColumns = groupedEntries.reduce<
+    { items: [string, Material[]][]; count: number }[]
+  >(
+    (columns, entry) => {
+      const [type, items] = entry;
+      const nextIndex = columns
+        .map((column, index) => ({ index, count: column.count }))
+        .sort((a, b) => a.count - b.count)[0].index;
+      columns[nextIndex].items.push([type, items]);
+      columns[nextIndex].count += items.length;
+      return columns;
+    },
+    Array.from({ length: effectiveColumns }, () => ({ items: [], count: 0 }))
+  );
 
   const sortedByOrder = (items: Material[]) =>
     [...items].sort((a, b) => {
@@ -219,6 +240,36 @@ export default function DashboardPage() {
     setDraggingId(null);
   };
 
+  const handlePanStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest(".card-menu") || target.closest(".card-link")) {
+      return;
+    }
+    const container = scrollRef.current;
+    if (!container) return;
+    isPanningRef.current = true;
+    panStartRef.current = {
+      x: event.clientX,
+      scrollLeft: container.scrollLeft
+    };
+    container.classList.add("is-panning");
+  };
+
+  const handlePanMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPanningRef.current) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    const delta = event.clientX - panStartRef.current.x;
+    container.scrollLeft = panStartRef.current.scrollLeft - delta;
+  };
+
+  const handlePanEnd = () => {
+    const container = scrollRef.current;
+    if (!container) return;
+    isPanningRef.current = false;
+    container.classList.remove("is-panning");
+  };
+
   const handleDrop = async (
     sourceId: string,
     targetId: string,
@@ -249,20 +300,24 @@ export default function DashboardPage() {
     );
 
     if (!userId) return;
-    const { error } = await supabase.from("materials").upsert(
-      updates.map((item) => ({
-        id: item.id,
-        sort_order: item.sort_order
-      }))
+    const updateResults = await Promise.all(
+      updates.map((item) =>
+        supabase
+          .from("materials")
+          .update({ sort_order: item.sort_order })
+          .eq("id", item.id)
+          .eq("user_id", userId)
+      )
     );
 
-    if (error) {
-      setStatus(error.message);
+    const updateError = updateResults.find((result) => result.error)?.error;
+    if (updateError) {
+      setStatus(updateError.message);
     }
   };
 
   return (
-    <div className="min-h-screen px-6 py-16 flex justify-center">
+    <div className="min-h-screen px-2 py-16 flex justify-center">
       <div className="w-full max-w-6xl grid gap-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
@@ -275,16 +330,16 @@ export default function DashboardPage() {
           </div>
           <div className="flex gap-4">
             <button
-              className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-base tracking-[0.04em] text-gray-200 hover:bg-white/10 active:scale-[0.99] transition"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-            <button
-              className="rounded-md border border-white/10 bg-white/10 px-4 py-2 text-base tracking-[0.04em] text-white hover:bg-white/15 active:scale-[0.99] transition"
+              className="rounded-md border border-white/15 bg-[#0b132b]/70 px-4 py-2 text-base tracking-[0.04em] text-white hover:bg-[#0b132b]/85 active:scale-[0.99] transition"
               onClick={() => handleOpenModal()}
             >
               Add Material
+            </button>
+            <button
+              className="rounded-md border border-white/15 bg-[#0b132b]/70 px-4 py-2 text-base tracking-[0.04em] text-gray-200 hover:bg-[#0b132b]/85 active:scale-[0.99] transition"
+              onClick={handleLogout}
+            >
+              Logout
             </button>
           </div>
         </div>
@@ -316,58 +371,76 @@ export default function DashboardPage() {
         )}
 
         {!loading && materials.length > 0 && (
-          <div className="tree-shell">
-            <div className="tree-groups">
-              {groupedEntries.map(([type, items], groupIndex) => (
-                <div
-                  key={type}
-                  className={`tree-group ${
-                    groupIndex % 2 === 0 ? "branch-left" : "branch-right"
-                  }`}
-                >
-                  <div className="group-header">
-                    <div className="group-dot" />
-                    <span className="group-title">{type}</span>
-                  </div>
-                  <div className="tree-list">
-                    {sortedByOrder(items).map((material) => (
-                      <div
-                        key={material.id}
-                        className="tree-node"
-                        draggable
-                        onDragStart={(event) => {
-                          event.dataTransfer.setData("text/plain", material.id);
-                          handleDragStart(material);
-                        }}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const sourceId =
-                            event.dataTransfer.getData("text/plain");
-                          handleDrop(sourceId, material.id, material.type);
-                        }}
-                      >
-                        <MaterialCard
-                          material={material}
-                          onEdit={(item) => handleOpenModal(item)}
-                          onDelete={handleDelete}
-                          dragging={draggingId === material.id}
-                        />
+          <div
+            className="tree-scroll"
+            ref={scrollRef}
+            onMouseDown={handlePanStart}
+            onMouseMove={handlePanMove}
+            onMouseUp={handlePanEnd}
+            onMouseLeave={handlePanEnd}
+          >
+            <div className="tree-shell">
+              <div
+                className="tree-columns"
+                style={{ [`--tree-cols` as const]: effectiveColumns }}
+              >
+              {balancedColumns.map((column, columnIndex) => (
+                <div key={`column-${columnIndex}`} className="tree-column">
+                  {column.items.map(([type, items], groupIndex) => (
+                    <div
+                      key={`${type}-${columnIndex}`}
+                      className={`tree-group ${
+                        (columnIndex + groupIndex) % 2 === 0
+                          ? "branch-left"
+                          : "branch-right"
+                      }`}
+                    >
+                      <div className="group-header">
+                        <div className="group-dot" />
+                        <span className="group-title">{type}</span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="tree-list">
+                        {sortedByOrder(items).map((material) => (
+                          <div
+                            key={material.id}
+                            className="tree-node"
+                            draggable
+                            onDragStart={(event) => {
+                              event.dataTransfer.setData(
+                                "text/plain",
+                                material.id
+                              );
+                              handleDragStart(material);
+                            }}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              const sourceId =
+                                event.dataTransfer.getData("text/plain");
+                              handleDrop(sourceId, material.id, material.type);
+                            }}
+                          >
+                            <MaterialCard
+                              material={material}
+                              onEdit={(item) => handleOpenModal(item)}
+                              onDelete={handleDelete}
+                              dragging={draggingId === material.id}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
+              </div>
             </div>
           </div>
         )}
 
-        <p className="text-sm text-gray-500 tracking-[0.04em]">
-          {saving ? "Saving changes..." : "Links open in a new tab."}
-        </p>
-
         <AddMaterialModal
+          key={`${editingMaterial?.id ?? "new"}-${modalOpen ? "open" : "closed"}`}
           open={modalOpen}
           onClose={handleCloseModal}
           onSubmit={handleSave}

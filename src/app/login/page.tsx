@@ -49,32 +49,32 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-6 sm:py-16 overflow-hidden">
       <div className="card-node login-card backdrop-blur px-3 py-4 min-h-[200px] sm:px-12 sm:py-12 sm:min-h-[520px] bg-[#0b132b]/80 shadow-[0_20px_60px_rgba(2,6,23,0.6)]">
-        <h1 className="text-2xl sm:text-5xl font-semibold tracking-[0.04em] text-gray-100 text-center">
+        <h1 className="text-lg sm:text-3xl font-semibold tracking-[0.04em] text-gray-100 text-center mt-2">
           Capstone Hub
         </h1>
-        <p className="text-xs sm:text-lg text-gray-400 mt-2 sm:mt-4 text-center">
+        <p className="text-[11px] sm:text-sm text-gray-400 mt-2 sm:mt-3 text-center">
           Sign in to access Orvion space.
         </p>
         <form
-          className="mt-4 sm:mt-12 grid gap-3 sm:gap-8"
+          className="mt-4 sm:mt-10 grid gap-3 sm:gap-6"
           onSubmit={(event) => {
             event.preventDefault();
             handleLogin();
           }}
         >
-          <label className="grid gap-2 sm:gap-3 text-[11px] sm:text-base tracking-[0.04em] text-gray-400 font-light max-w-[420px] mx-auto w-full">
+          <label className="grid gap-2 sm:gap-3 text-[10px] sm:text-xs tracking-[0.04em] text-gray-400 font-light max-w-[340px] mx-auto w-full">
             Username
             <input
-              className="w-full rounded-md border border-white/10 bg-slate-800 px-3 py-2 sm:py-4 text-sm sm:text-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-white/30"
+              className="w-full rounded-md border border-white/10 bg-slate-800 px-3 py-2 sm:py-3 text-[12px] sm:text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-white/30"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               required
             />
           </label>
-          <label className="grid gap-2 sm:gap-3 text-[11px] sm:text-base tracking-[0.04em] text-gray-400 font-light max-w-[420px] mx-auto w-full">
+          <label className="grid gap-2 sm:gap-3 text-[10px] sm:text-xs tracking-[0.04em] text-gray-400 font-light max-w-[340px] mx-auto w-full">
             Password
             <input
-              className="w-full rounded-md border border-white/10 bg-slate-800 px-3 py-2 sm:py-4 text-sm sm:text-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-white/30"
+              className="w-full rounded-md border border-white/10 bg-slate-800 px-3 py-2 sm:py-3 text-[12px] sm:text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-white/30"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -84,10 +84,10 @@ export default function LoginPage() {
           <div className="pt-2 sm:pt-4 flex justify-center">
             <button
               type="submit"
-              className="rounded-md border border-white/10 bg-white/10 px-4 sm:px-8 py-1 sm:py-2 text-[11px] sm:text-base tracking-[0.04em] text-white hover:bg-white/15 active:scale-[0.99] transition"
+              className="rounded-md border border-white/10 bg-white/10 px-4 sm:px-6 py-1 sm:py-1.5 text-[11px] sm:text-xs tracking-[0.04em] text-white hover:bg-white/15 active:scale-[0.99] transition"
               disabled={loading}
             >
-              {loading ? "Pogi ni Galias ->" : "Login"}
+              {loading ? "pogi ni galias ->" : "Login"}
             </button>
           </div>
         </form>

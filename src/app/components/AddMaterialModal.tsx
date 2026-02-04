@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Material } from "./MaterialCard";
 
 type MaterialInput = Omit<Material, "id" | "created_at" | "sort_order">;
@@ -20,22 +20,9 @@ export default function AddMaterialModal({
   initialData,
   typeOptions
 }: AddMaterialModalProps) {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState(typeOptions[0] || "");
-  const [link, setLink] = useState("");
-
-  useEffect(() => {
-    if (initialData) {
-      setTitle(initialData.title);
-      setType(initialData.type);
-      setLink(initialData.link);
-      return;
-    }
-
-    setTitle("");
-    setType(typeOptions[0] || "");
-    setLink("");
-  }, [initialData, typeOptions]);
+  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [type, setType] = useState(initialData?.type ?? typeOptions[0] ?? "");
+  const [link, setLink] = useState(initialData?.link ?? "");
 
   if (!open) return null;
 
@@ -46,12 +33,6 @@ export default function AddMaterialModal({
           <h2 className="text-xl font-semibold tracking-[0.04em] text-gray-100">
             {initialData ? "Edit material" : "Add new material"}
           </h2>
-          <button
-            className="rounded-md border border-white/10 px-3 py-1.5 text-xs tracking-[0.04em] text-gray-300 hover:bg-white/5"
-            onClick={onClose}
-          >
-            Close
-          </button>
         </div>
         <form
           className="mt-6 grid gap-5"
@@ -66,7 +47,6 @@ export default function AddMaterialModal({
               className="w-full rounded-md border border-white/10 bg-slate-800 px-4 py-3 text-base text-gray-200 focus:outline-none focus:ring-1 focus:ring-white/30"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="System Flowchart"
               required
             />
           </label>
@@ -90,7 +70,6 @@ export default function AddMaterialModal({
               className="w-full rounded-md border border-white/10 bg-slate-800 px-4 py-3 text-base text-gray-200 focus:outline-none focus:ring-1 focus:ring-white/30"
               value={link}
               onChange={(event) => setLink(event.target.value)}
-              placeholder="https://"
               type="url"
               required
             />

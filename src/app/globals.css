@@ -78,8 +78,22 @@ body::after {
   position: relative;
 }
 
+.tree-scroll {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 12px;
+  cursor: grab;
+  scroll-behavior: smooth;
+}
+
+.tree-scroll.is-panning {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
 .tree-shell::before {
-  content: "";
+  content: none;
   position: absolute;
   left: 50%;
   top: 0;
@@ -88,10 +102,17 @@ body::after {
   background: rgba(255, 255, 255, 0.18);
 }
 
-.tree-groups {
+.tree-columns {
   display: grid;
-  gap: 42px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 48px;
+  grid-template-columns: repeat(var(--tree-cols, 3), minmax(360px, 1fr));
+  min-width: calc(var(--tree-cols, 3) * 360px + (var(--tree-cols, 3) - 1) * 48px);
+}
+
+.tree-column {
+  display: grid;
+  gap: 48px;
+  align-items: start;
 }
 
 .tree-group.branch-left {
@@ -152,18 +173,32 @@ body::after {
   gap: 28px;
   position: relative;
   padding-left: 28px;
+  align-items: stretch;
 }
 
 .tree-list::before {
-  content: none;
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .tree-node {
   position: relative;
+  width: 100%;
 }
 
 .tree-node::before {
-  content: none;
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 28px;
+  width: 16px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .tree-node:nth-child(even) {
@@ -188,6 +223,7 @@ body::after {
 
 .card-node {
   position: relative;
+  width: 100%;
   background: rgba(11, 19, 43, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
@@ -285,6 +321,18 @@ body::after {
   color: #f1f5f9;
 }
 
+.card-link {
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.card-link:hover,
+.card-link:focus-visible {
+  text-decoration: underline;
+}
 
 .empty-state {
   border: 1px dashed rgba(255, 255, 255, 0.15);
@@ -337,11 +385,18 @@ body::after {
 
 .login-card {
   width: 100%;
-  max-width: 520px;
+  max-width: 400px;
   min-height: unset;
   cursor: default;
   background: rgba(11, 19, 43, 0.6);
   backdrop-filter: blur(12px);
+}
+
+.login-card:hover {
+  background: rgba(11, 19, 43, 0.6);
+  box-shadow: none;
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 480px) {
@@ -359,19 +414,56 @@ body::after {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .tree-groups {
+  .tree-columns {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 1280px) {
-  .tree-groups {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 700px) {
   .card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tree-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .tree-scroll {
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  .tree-columns {
+    min-width: 100%;
+    gap: 32px;
+  }
+
+  .tree-group.branch-right,
+  .tree-group.branch-left {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .tree-list,
+  .tree-group.branch-right .tree-list {
+    padding-left: 0;
+  }
+
+  .tree-list::before {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .tree-list {
+    align-items: center;
+  }
+
+  .tree-node,
+  .card-node {
+    width: 100%;
+    max-width: 86%;
+    margin: 0 auto;
   }
 }
