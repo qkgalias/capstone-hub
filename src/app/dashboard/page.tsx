@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import AddMaterialModal from "../components/AddMaterialModal";
@@ -382,7 +383,7 @@ export default function DashboardPage() {
             <div className="tree-shell">
               <div
                 className="tree-columns"
-                style={{ [`--tree-cols` as const]: effectiveColumns }}
+                style={{ "--tree-cols": effectiveColumns } as CSSProperties}
               >
               {balancedColumns.map((column, columnIndex) => (
                 <div key={`column-${columnIndex}`} className="tree-column">
