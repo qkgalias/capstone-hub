@@ -47,8 +47,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-4 sm:py-16">
-      <div className="card-node login-card backdrop-blur px-3 py-4 min-h-[200px] sm:px-14 sm:py-14 sm:min-h-[600px]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-6 sm:py-16 overflow-hidden">
+      <div className="card-node login-card backdrop-blur px-3 py-4 min-h-[200px] sm:px-12 sm:py-12 sm:min-h-[520px] bg-[#0b132b]/80 shadow-[0_20px_60px_rgba(2,6,23,0.6)]">
         <h1 className="text-2xl sm:text-5xl font-semibold tracking-[0.04em] text-gray-100 text-center">
           Capstone Hub
         </h1>
